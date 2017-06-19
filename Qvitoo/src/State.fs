@@ -11,6 +11,7 @@ let pageParser: Parser<Page->Page,Page> =
   oneOf [
     map About (s "about")
     map Counter (s "counter")
+    map VATComponents (s "vatcomponents")
     map Home (s "home")
   ]
 
@@ -18,17 +19,19 @@ let urlUpdate (result: Option<Page>) model =
   match result with
   | None ->
     console.error("Error parsing url")
-    model,Navigation.modifyUrl (toHash model.currentPage)
+    model, Navigation.modifyUrl (toHash model.currentPage)
   | Some page ->
-      { model with currentPage = page }, []
+    { model with currentPage = page }, []
 
 let init result =
-  let (counter, counterCmd) = Counter.State.init()
-  let (home, homeCmd) = Home.State.init()
+  let (counter, counterCmd) = Counter.State.init ()
+  let (home, homeCmd) = Home.State.init ()
+  let (vatComponents, vatCmd) = VATComponents.State.init ()
   let (model, cmd) =
     urlUpdate result
       { currentPage = Home
         counter = counter
+        vatComponents = vatComponents
         home = home }
   model, Cmd.batch [ cmd
                      Cmd.map CounterMsg counterCmd
@@ -37,8 +40,13 @@ let init result =
 let update msg model =
   match msg with
   | CounterMsg msg ->
-      let (counter, counterCmd) = Counter.State.update msg model.counter
-      { model with counter = counter }, Cmd.map CounterMsg counterCmd
+    let (counter, counterCmd) = Counter.State.update msg model.counter
+    { model with counter = counter }, Cmd.map CounterMsg counterCmd
+
+  | VATComponentsMsg msg ->
+    let (vc, vcCmd) = VATComponents.State.update msg model.vatComponents
+    { model with vatComponents = vc }, Cmd.map VATComponentsMsg vcCmd
+
   | HomeMsg msg ->
-      let (home, homeCmd) = Home.State.update msg model.home
-      { model with home = home }, Cmd.map HomeMsg homeCmd
+    let (home, homeCmd) = Home.State.update msg model.home
+    { model with home = home }, Cmd.map HomeMsg homeCmd
